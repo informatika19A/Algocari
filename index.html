@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algorithm Lab — Algoritma Pengurutan &amp; Pencarian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B1220;
+  --bg2:#0E1730;
+  --panel:#141B2E;
+  --panel2:#1B2440;
+  --line: rgba(255,255,255,0.08);
+  --cyan:#22D3EE;
+  --magenta:#F0459B;
+  --lime:#A8FF60;
+  --amber:#FFB020;
+  --violet:#8B7CFF;
+  --text:#F5F7FF;
+  --muted:#93A0C2;
+  --radius:16px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1100px 600px at 85% -10%, rgba(139,124,255,0.20), transparent 60%),
+    radial-gradient(900px 500px at -10% 10%, rgba(34,211,238,0.16), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;margin:0 0 8px;letter-spacing:-0.01em;}
+p{line-height:1.6;color:var(--muted);margin:0 0 12px;}
+code, .mono{font-family:'JetBrains Mono',monospace;}
+::selection{background:var(--magenta);color:#fff;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+
+/* ===== layout ===== */
+.app-shell{display:flex;min-height:100vh;}
+.stepper{
+  width:262px;flex-shrink:0;background:linear-gradient(180deg,var(--panel),var(--bg2));
+  border-right:1px solid var(--line);padding:26px 16px;position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:26px;padding:0 6px;}
+.brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;color:#0B1220;font-size:18px;box-shadow:0 6px 16px rgba(34,211,238,0.35);}
+.brand-name{font-family:'Space Grotesk';font-weight:700;font-size:15px;line-height:1.2;}
+.brand-sub{font-size:11px;color:var(--muted);}
+.step-item{
+  display:flex;gap:12px;align-items:flex-start;padding:10px 10px;border-radius:12px;margin-bottom:2px;
+  cursor:pointer;transition:background .15s ease; border:1px solid transparent;
+}
+.step-item:hover{background:rgba(255,255,255,0.04);}
+.step-item.active{background:rgba(34,211,238,0.10);border-color:rgba(34,211,238,0.35);}
+.step-num{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;font-family:'Space Grotesk';background:var(--panel2);color:var(--muted);border:1px solid var(--line);
+}
+.step-item.active .step-num{background:var(--cyan);color:#0B1220;border-color:var(--cyan);}
+.step-item.done .step-num{background:var(--lime);color:#0B1220;border-color:var(--lime);}
+.step-label{font-size:13.5px;font-weight:600;}
+.step-desc{font-size:11px;color:var(--muted);margin-top:1px;}
+.step-item.locked{opacity:.42;cursor:not-allowed;}
+
+.main{flex:1;min-width:0;padding:38px 42px 80px;max-width:1180px;margin:0 auto;width:100%;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap;}
+.pill{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);padding:7px 14px;border-radius:999px;font-size:12.5px;color:var(--muted);}
+.pill b{color:var(--text);}
+
+.view{display:none;animation:fadeUp .35s ease;}
+.view.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* ===== cards / buttons ===== */
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:var(--radius);padding:26px;margin-bottom:22px;
+  box-shadow:0 12px 30px rgba(0,0,0,0.25);
+}
+.eyebrow{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);margin-bottom:10px;}
+.btn{
+  background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:11px 20px;border-radius:11px;
+  font-weight:600;font-size:14px;transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.btn:hover{transform:translateY(-2px);background:#212C4C;}
+.btn.primary{background:linear-gradient(135deg,var(--cyan),#0EA5C9);color:#04141A;border:none;box-shadow:0 8px 20px rgba(34,211,238,0.3);}
+.btn.primary:hover{box-shadow:0 10px 26px rgba(34,211,238,0.45);}
+.btn.magenta{background:linear-gradient(135deg,var(--magenta),#B92E71);color:#fff;border:none;}
+.btn.small{padding:7px 13px;font-size:12.5px;border-radius:9px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+@media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+input[type=text],input[type=date],input[type=number],select,textarea{
+  width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--text);font-size:14px;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--cyan);outline-offset:1px;}
+.field{margin-bottom:16px;}
+
+/* ===== cover ===== */
+.hero{position:relative;padding:52px 40px;border-radius:20px;overflow:hidden;
+  background:linear-gradient(135deg,#131B34,#1B1140 70%);border:1px solid var(--line);margin-bottom:24px;}
+.hero-blocks{position:absolute;inset:0;pointer-events:none;perspective:900px;}
+.floatblock{position:absolute;border-radius:6px;opacity:.85;box-shadow:0 14px 26px rgba(0,0,0,.4);animation:floaty 6s ease-in-out infinite;}
+@keyframes floaty{0%,100%{transform:translateY(0) rotateX(8deg) rotateY(-6deg);}50%{transform:translateY(-14px) rotateX(8deg) rotateY(-6deg);}}
+.hero h1{font-size:34px;max-width:600px;position:relative;}
+.hero p.lead{font-size:15.5px;max-width:560px;position:relative;color:#C7CEE8;}
+
+/* ===== blocks visualizer ===== */
+.viz-stage{
+  display:flex;align-items:flex-end;gap:6px;height:200px;background:var(--bg2);border:1px solid var(--line);
+  border-radius:12px;padding:14px 14px 0;overflow-x:auto;perspective:700px;
+}
+.block{
+  flex:1 0 auto;min-width:22px;max-width:56px;border-radius:6px 6px 3px 3px;position:relative;
+  display:flex;align-items:flex-start;justify-content:center;padding-top:4px;
+  transition:height .25s ease, background .2s ease, transform .2s ease;
+  transform:rotateX(3deg);
+}
+.block-label{font-family:'JetBrains Mono';font-size:11px;font-weight:600;color:#04141A;}
+.state-default{background:linear-gradient(180deg,#4FE0F5,var(--cyan) 70%,#0E93AB);box-shadow:inset 0 -6px 0 rgba(0,0,0,.22),0 6px 12px rgba(34,211,238,.25);}
+.state-compare{background:linear-gradient(180deg,#FFD37A,var(--amber) 70%,#B87500);box-shadow:inset 0 -6px 0 rgba(0,0,0,.22),0 6px 12px rgba(255,176,32,.35);transform:translateY(-4px) rotateX(3deg);}
+.state-swap{background:linear-gradient(180deg,#FF7FC0,var(--magenta) 70%,#A02B65);box-shadow:inset 0 -6px 0 rgba(0,0,0,.22),0 6px 14px rgba(240,69,155,.4);transform:translateY(-8px) rotateX(3deg);}
+.state-pivot{background:linear-gradient(180deg,#C8BBFF,var(--violet) 70%,#5A4CC7);box-shadow:inset 0 -6px 0 rgba(0,0,0,.22),0 6px 12px rgba(139,124,255,.35);}
+.state-sorted{background:linear-gradient(180deg,#D3FFAE,var(--lime) 70%,#6FA82E);box-shadow:inset 0 -6px 0 rgba(0,0,0,.22),0 6px 12px rgba(168,255,96,.3);}
+.state-found{background:linear-gradient(180deg,#D3FFAE,var(--lime) 70%,#6FA82E);box-shadow:0 0 0 3px rgba(168,255,96,.45),0 6px 14px rgba(168,255,96,.4);}
+.state-dim{background:linear-gradient(180deg,#3A4568,#2A3350 70%,#1E2540);opacity:.5;}
+.viz-note{font-size:13.5px;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:12px;min-height:20px;}
+.viz-controls{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.viz-counter{font-size:12px;color:var(--muted);font-family:'JetBrains Mono';margin-left:auto;}
+input[type=range]{accent-color:var(--cyan);width:130px;}
+
+/* ===== tabs ===== */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.tab-btn{background:var(--panel2);border:1px solid var(--line);color:var(--muted);padding:9px 16px;border-radius:10px;font-weight:600;font-size:13px;}
+.tab-btn.active{background:linear-gradient(135deg,var(--cyan),#0EA5C9);color:#04141A;border-color:transparent;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+table.complexity{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0;}
+table.complexity th,table.complexity td{border:1px solid var(--line);padding:9px 11px;text-align:center;}
+table.complexity th{background:var(--panel2);color:var(--cyan);font-family:'Space Grotesk';}
+pre.pseudocode{background:#0A0F1F;border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;font-size:12.8px;color:#BFE9FF;line-height:1.7;}
+ul.check-list{margin:0 0 12px;padding-left:20px;}
+ul.check-list li{color:var(--muted);margin-bottom:5px;font-size:14px;}
+
+/* ===== quiz ===== */
+.q-block{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:var(--bg2);}
+.q-tag{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;}
+.q-tag.mudah{background:rgba(168,255,96,.18);color:var(--lime);}
+.q-tag.sedang{background:rgba(255,176,32,.18);color:var(--amber);}
+.q-tag.sulit{background:rgba(240,69,155,.18);color:var(--magenta);}
+.opt-label{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;border:1px solid var(--line);margin-bottom:7px;cursor:pointer;font-size:13.5px;transition:background .12s;}
+.opt-label:hover{background:rgba(255,255,255,.04);}
+.opt-label input{accent-color:var(--cyan);}
+.q-feedback{font-size:13px;margin-top:8px;padding:9px 12px;border-radius:9px;display:none;}
+.q-feedback.correct{display:block;background:rgba(168,255,96,.12);color:var(--lime);border:1px solid rgba(168,255,96,.3);}
+.q-feedback.incorrect{display:block;background:rgba(240,69,155,.12);color:var(--magenta);border:1px solid rgba(240,69,155,.3);}
+.opt-label.correct-ans{border-color:var(--lime);}
+.opt-label.wrong-ans{border-color:var(--magenta);}
+
+/* ===== score bars / sliders ===== */
+.score-bar-track{background:var(--bg2);border:1px solid var(--line);border-radius:999px;height:14px;overflow:hidden;}
+.score-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--lime));transition:width .6s ease;}
+.slider-row{margin-bottom:16px;}
+.slider-row .slabel{display:flex;justify-content:space-between;font-size:13.5px;color:var(--text);margin-bottom:6px;font-weight:500;}
+input[type=range].refl{width:100%;}
+
+/* misc */
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);padding:4px 11px;border-radius:999px;font-size:11.5px;color:var(--muted);margin-right:6px;margin-bottom:6px;}
+.two-col{display:grid;grid-template-columns:1.1fr 0.9fr;gap:20px;}
+@media(max-width:900px){.two-col{grid-template-columns:1fr;}.app-shell{flex-direction:column;}.stepper{width:100%;height:auto;position:relative;display:flex;overflow-x:auto;gap:6px;padding:14px 12px;}
+  .step-item{flex-direction:column;min-width:110px;text-align:center;align-items:center;}
+  .step-desc{display:none;} .main{padding:24px 18px 60px;}}
+.center{text-align:center;}
+hr.div{border:none;border-top:1px solid var(--line);margin:20px 0;}
+.warn-box{background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.35);color:#FFD37A;padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;}
+.check-strategy{display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid var(--line);font-size:13.5px;}
+.check-strategy input{margin-top:3px;accent-color:var(--lime);}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <nav class="stepper" id="stepper"></nav>
+  <main class="main">
+    <div class="topbar">
+      <span class="pill" id="whoami">Belum masuk</span>
+      <span class="pill">💻 Informatika · Fase E · Kelas X</span>
+    </div>
+
+    <!-- ============ COVER / LOGIN ============ -->
+    <section class="view active" data-view="cover" id="view-cover">
+      <div class="hero">
+        <div class="hero-blocks" id="heroBlocks"></div>
+        <span class="eyebrow" style="position:relative">Algorithm Lab</span>
+        <h1>Belajar Berpikir Algoritmik Lewat Warna, Bentuk, dan Simulasi.</h1>
+        <p class="lead">Modul interaktif untuk memahami pola pikir algoritma, algoritma pencarian, dan algoritma pengurutan — lengkap dengan simulasi visual, kuis bertingkat, dan refleksi metakognisi.</p>
+      </div>
+
+      <div class="card">
+        <span class="eyebrow">Data Diri</span>
+        <h2>Isi datamu sebelum masuk ruang belajar</h2>
+        <p>Data ini digunakan untuk mencatat hasil pre-test, post-test, dan refleksi belajarmu selama sesi ini.</p>
+        <div class="grid2">
+          <div class="field">
+            <label for="inNama">Nama Lengkap</label>
+            <input type="text" id="inNama" placeholder="Contoh: Ayu Lestari">
+          </div>
+          <div class="field">
+            <label for="inNisn">NIS</label>
+            <input type="text" id="inNisn" placeholder="4 digit NIS" inputmode="numeric" maxlength="4">
+          </div>
+          <div class="field">
+            <label for="inKelas">Kelas</label>
+            <select id="inKelas">
+              <option value="">Pilih kelas</option>
+              <option>X-3</option><option>X-4</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="inTanggal">Tanggal</label>
+            <input type="date" id="inTanggal">
+          </div>
+        </div>
+        <div class="field" style="max-width:260px;">
+          <label>Hari</label>
+          <input type="text" id="inHari" readonly>
+        </div>
+        <div id="coverWarn" class="warn-box" style="display:none;">Lengkapi Nama, NIS, dan Kelas terlebih dahulu ya.</div>
+        <div class="btn-row">
+          <button class="btn primary" id="btnMasuk">Masuk ke Ruang Belajar →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PRE TEST ============ -->
+    <section class="view" data-view="pretest" id="view-pretest">
+      <span class="eyebrow">Langkah 1</span>
+      <h2>Pre-Test — Cek Pemahaman Awal</h2>
+      <p>Jawab sesuai pemahamanmu saat ini. Tidak masalah jika belum tahu — ini akan dibandingkan dengan post-test di akhir sesi.</p>
+      <div id="pretestQuestions"></div>
+      <div class="btn-row">
+        <button class="btn primary" id="btnSubmitPre">Kumpulkan Pre-Test</button>
+      </div>
+      <div class="card" id="preResultCard" style="display:none;">
+        <span class="eyebrow">Hasil</span>
+        <h3 id="preScoreText"></h3>
+        <div class="score-bar-track"><div class="score-bar-fill" id="preScoreBar" style="width:0%"></div></div>
+        <div class="btn-row"><button class="btn primary" id="btnAfterPre">Lanjut ke Tujuan Pembelajaran →</button></div>
+      </div>
+    </section>
+
+    <!-- ============ TUJUAN ============ -->
+    <section class="view" data-view="tujuan" id="view-tujuan">
+      <span class="eyebrow">Langkah 2</span>
+      <h2>Tujuan Pembelajaran</h2>
+      <div class="grid2">
+        <div class="card">
+          <div style="font-size:26px;margin-bottom:8px;">🧩</div>
+          <h3>Berpikir Algoritmik</h3>
+          <p>Murid mampu menerapkan metode berpikir algoritma untuk mendekati masalah yang agak kompleks dan menemukan solusinya secara sistematis: memahami masalah, memecahnya jadi langkah kecil, dan merancang urutan solusi.</p>
+        </div>
+        <div class="card">
+          <div style="font-size:26px;margin-bottom:8px;">🔀</div>
+          <h3>Algoritma Pencarian &amp; Pengurutan</h3>
+          <p>Murid mampu mengaplikasikan berbagai algoritma pencarian (Sequential, Binary) dan algoritma pengurutan (Selection, Insertion, Bubble, Merge, Quick) untuk menyelesaikan persoalan data secara efisien.</p>
+        </div>
+      </div>
+      <div class="card">
+        <span class="eyebrow">Alur Belajar Hari Ini</span>
+        <ul class="check-list">
+          <li>Pre-Test → mengukur pemahaman awal</li>
+          <li>Materi → lima algoritma pengurutan standar + dua algoritma pencarian, lengkap dengan pseudokode dan visualisasi</li>
+          <li>Simulasi → menyelesaikan studi kasus dunia nyata dengan algoritma pilihanmu</li>
+          <li>Kuis bertingkat → mudah, sedang, sulit</li>
+          <li>Refleksi → mengenali strategi belajarmu sendiri (metakognisi)</li>
+          <li>Post-Test → mengukur seberapa jauh kamu berkembang</li>
+        </ul>
+        <div class="btn-row"><button class="btn primary" id="btnToMateri">Mulai Materi →</button></div>
+      </div>
+    </section>
+
+    <!-- ============ MATERI ============ -->
+    <section class="view" data-view="materi" id="view-materi">
+      <span class="eyebrow">Langkah 3</span>
+      <h2>Materi: Algoritma Standar</h2>
+      <p>Pilih satu algoritma untuk membaca cara kerjanya, pseudokodenya, kompleksitasnya, lalu tekan <b>Mainkan</b> untuk melihat animasinya langkah demi langkah.</p>
+
+      <div class="tabs" id="materiTabs"></div>
+      <div id="materiPanels"></div>
+
+      <div class="card">
+        <span class="eyebrow">Algoritma Pencarian</span>
+        <h3>Sequential Search vs Binary Search</h3>
+        <div class="tabs" id="searchTabs"></div>
+        <div id="searchPanels"></div>
+      </div>
+
+      <div class="btn-row"><button class="btn primary" id="btnToSimulasi">Lanjut ke Simulasi →</button></div>
+    </section>
+
+    <!-- ============ SIMULASI ============ -->
+    <section class="view" data-view="simulasi" id="view-simulasi">
+      <span class="eyebrow">Langkah 4</span>
+      <h2>Simulasi Pemecahan Masalah</h2>
+      <p>Terapkan cara berpikir algoritmik pada dua studi kasus. Pecah masalahnya, pilih algoritma yang cocok, jalankan, lalu jawab pertanyaan pemantik.</p>
+      <div id="simCases"></div>
+      <div class="btn-row"><button class="btn primary" id="btnToKuis">Lanjut ke Kuis →</button></div>
+    </section>
+
+    <!-- ============ KUIS ============ -->
+    <section class="view" data-view="kuis" id="view-kuis">
+      <span class="eyebrow">Langkah 5</span>
+      <h2>Kuis Interaktif Bertingkat</h2>
+      <p>Kerjakan dari level Mudah, Sedang, hingga Sulit. Setiap jawaban langsung diberi umpan balik.</p>
+      <div id="quizLevels"></div>
+      <div class="card">
+        <span class="eyebrow">Skor Kuis</span>
+        <div class="score-bar-track"><div class="score-bar-fill" id="quizScoreBar" style="width:0%"></div></div>
+        <p id="quizScoreText" style="margin-top:8px;">Belum ada jawaban.</p>
+        <div class="btn-row"><button class="btn primary" id="btnToRefleksi">Lanjut ke Refleksi →</button></div>
+      </div>
+    </section>
+
+    <!-- ============ REFLEKSI ============ -->
+    <section class="view" data-view="refleksi" id="view-refleksi">
+      <span class="eyebrow">Langkah 6</span>
+      <h2>Refleksi &amp; Regulasi Diri</h2>
+      <p>Bagian ini melatih metakognisi: menyadari apa yang kamu pahami, bagaimana caramu belajar, dan apa langkah berikutnya.</p>
+
+      <div class="card">
+        <span class="eyebrow">Seberapa Yakin Kamu?</span>
+        <div id="reflSliders"></div>
+      </div>
+
+      <div class="card">
+        <span class="eyebrow">Regulasi Diri — Strategi yang Kupakai</span>
+        <h3 style="font-size:14px;">Perencanaan</h3>
+        <div id="stratPlan"></div>
+        <h3 style="font-size:14px;margin-top:14px;">Pemantauan</h3>
+        <div id="stratMonitor"></div>
+        <h3 style="font-size:14px;margin-top:14px;">Evaluasi</h3>
+        <div id="stratEval"></div>
+      </div>
+
+      <div class="card">
+        <span class="eyebrow">Tulis Refleksimu</span>
+        <div class="field">
+          <label>Bagian tersulit bagi saya adalah...</label>
+          <textarea id="reflSulit" rows="3" placeholder="Ceritakan bagian yang paling menantang..."></textarea>
+        </div>
+        <div class="field">
+          <label>Saat menemui kesulitan, strategi yang saya lakukan adalah...</label>
+          <textarea id="reflStrategi" rows="3" placeholder="Misalnya: mengulang animasi, bertanya ke teman, mencoba menjelaskan ulang dengan kata sendiri..."></textarea>
+        </div>
+        <div class="field">
+          <label>Target belajar saya selanjutnya adalah...</label>
+          <textarea id="reflTarget" rows="3" placeholder="Apa yang ingin kamu kuasai lebih lanjut?"></textarea>
+        </div>
+        <div class="btn-row"><button class="btn primary" id="btnToPost">Lanjut ke Post-Test →</button></div>
+      </div>
+    </section>
+
+    <!-- ============ POST TEST ============ -->
+    <section class="view" data-view="posttest" id="view-posttest">
+      <span class="eyebrow">Langkah 7</span>
+      <h2>Post-Test — Cek Perkembangan</h2>
+      <p>Soal ini sejenis dengan pre-test di awal, untuk melihat seberapa jauh pemahamanmu berkembang.</p>
+      <div id="posttestQuestions"></div>
+      <div class="btn-row">
+        <button class="btn primary" id="btnSubmitPost">Kumpulkan Post-Test</button>
+      </div>
+    </section>
+
+    <!-- ============ HASIL ============ -->
+    <section class="view" data-view="hasil" id="view-hasil">
+      <span class="eyebrow">Ringkasan</span>
+      <h2>Hasil Belajarmu Hari Ini</h2>
+      <div class="two-col">
+        <div class="card">
+          <span class="eyebrow">Pre-Test vs Post-Test</span>
+          <div id="compareChart"></div>
+        </div>
+        <div class="card">
+          <span class="eyebrow">Identitas</span>
+          <p id="hasilIdentitas" style="color:var(--text);"></p>
+          <span class="eyebrow">Skor Kuis</span>
+          <p id="hasilKuis" style="color:var(--text);"></p>
+        </div>
+      </div>
+      <div class="card" id="hasilRefleksiCard">
+        <span class="eyebrow">Peta Metakognisi</span>
+        <div id="hasilRefleksi"></div>
+      </div>
+      <div class="card center">
+        <h3 id="hasilPesan">Terima kasih sudah belajar hari ini! 🎉</h3>
+        <div class="btn-row" style="justify-content:center;">
+          <button class="btn" onclick="window.print()">🖨️ Cetak Ringkasan</button>
+          <button class="btn magenta" id="btnKeluar">🚪 Keluar / Selesai Belajar</button>
+        </div>
+      </div>
+      <div class="card center" id="viewExit" style="display:none;">
+        <div style="font-size:40px;margin-bottom:10px;">✅</div>
+        <h2>Sesi Belajar Selesai</h2>
+        <p>Terima kasih, <b style="color:var(--text);" id="exitNama"></b>. Hasil belajarmu hari ini sudah tercatat. Sampai jumpa di sesi belajar berikutnya!</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* =========================================================
+   STATE
+========================================================= */
+const state = {
+  student:{nama:'',nisn:'',kelas:'',tanggal:'',hari:''},
+  sessionId: (crypto.randomUUID ? crypto.randomUUID() : Date.now()+'-'+Math.random().toString(16).slice(2)),
+  submitted:false,
+  loggedIn:false,
+  order:['cover','pretest','tujuan','materi','simulasi','kuis','refleksi','posttest','hasil'],
+  labels:{
+    cover:{l:'Data Diri',d:'Sebelum masuk'},
+    pretest:{l:'Pre-Test',d:'Cek pemahaman awal'},
+    tujuan:{l:'Tujuan Belajar',d:'Apa yang akan dicapai'},
+    materi:{l:'Materi',d:'Algoritma standar'},
+    simulasi:{l:'Simulasi',d:'Studi kasus'},
+    kuis:{l:'Kuis',d:'Mudah - sedang - sulit'},
+    refleksi:{l:'Refleksi',d:'Regulasi diri'},
+    posttest:{l:'Post-Test',d:'Cek perkembangan'},
+    hasil:{l:'Hasil',d:'Ringkasan akhir'}
+  },
+  unlocked:new Set(['cover']),
+  current:'cover',
+  pre:{score:null,total:0},
+  post:{score:null,total:0},
+  quiz:{correct:0,total:0}
+};
+
+/* =========================================================
+   STEPPER NAV
+========================================================= */
+function buildStepper(){
+  const nav=document.getElementById('stepper');
+  nav.innerHTML = `<div class="brand"><div class="brand-mark">Σ</div><div><div class="brand-name">Algorithm Lab</div><div class="brand-sub">Informatika · Fase E</div></div></div>`;
+  state.order.forEach((key,i)=>{
+    const info=state.labels[key];
+    const div=document.createElement('div');
+    div.className='step-item'+(key===state.current?' active':'')+(state.unlocked.has(key)?'':' locked');
+    div.innerHTML=`<div class="step-num">${state.unlocked.has(key)&&key!==state.current?'✓':i+1}</div>
+      <div><div class="step-label">${info.l}</div><div class="step-desc">${info.d}</div></div>`;
+    div.addEventListener('click',()=>{ if(state.unlocked.has(key)) goTo(key); });
+    nav.appendChild(div);
+  });
+}
+function unlock(key){ state.unlocked.add(key); }
+function goTo(key){
+  state.current=key;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+key).classList.add('active');
+  buildStepper();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =========================================================
+   COVER / LOGIN
+========================================================= */
+const dayNames=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+function initCover(){
+  const today=new Date();
+  document.getElementById('inTanggal').value=today.toISOString().slice(0,10);
+  updateHari();
+  document.getElementById('inTanggal').addEventListener('change',updateHari);
+  document.getElementById('btnMasuk').addEventListener('click',()=>{
+    const nama=document.getElementById('inNama').value.trim();
+    const nisn=document.getElementById('inNisn').value.trim();
+    const kelas=document.getElementById('inKelas').value;
+    const warnBox=document.getElementById('coverWarn');
+    if(!nama||!nisn||!kelas){ warnBox.textContent='Lengkapi Nama, NIS, dan Kelas terlebih dahulu ya.'; warnBox.style.display='block'; return; }
+    if(!/^\d{4}$/.test(nisn)){ warnBox.textContent='NIS harus terdiri dari 4 digit angka.'; warnBox.style.display='block'; return; }
+    warnBox.style.display='none';
+    state.student={nama,nisn,kelas,tanggal:document.getElementById('inTanggal').value,hari:document.getElementById('inHari').value};
+    state.loggedIn=true;
+    document.getElementById('whoami').innerHTML=`👋 <b>${nama}</b> · Kelas ${kelas}`;
+    ['pretest','tujuan','materi','simulasi','kuis','refleksi','posttest','hasil'].forEach(unlock);
+    goTo('pretest');
+  });
+  // floating 3d blocks decoration
+  const colors=['var(--cyan)','var(--magenta)','var(--lime)','var(--amber)','var(--violet)'];
+  const hb=document.getElementById('heroBlocks');
+  for(let i=0;i<10;i++){
+    const b=document.createElement('div'); b.className='floatblock';
+    const size=24+Math.random()*34;
+    b.style.width=size+'px'; b.style.height=(size*1.3)+'px';
+    b.style.background=colors[i%colors.length];
+    b.style.right=(2+Math.random()*46)+'%';
+    b.style.top=(6+Math.random()*70)+'%';
+    b.style.animationDelay=(Math.random()*4)+'s';
+    b.style.animationDuration=(5+Math.random()*3)+'s';
+    hb.appendChild(b);
+  }
+}
+function updateHari(){
+  const v=document.getElementById('inTanggal').value;
+  if(!v) return;
+  const d=new Date(v+'T00:00:00');
+  document.getElementById('inHari').value=dayNames[d.getDay()];
+}
+
+/* =========================================================
+   ALGORITHM STEP GENERATORS
+========================================================= */
+function cloneArr(a){return a.slice();}
+function frame(arr,hl,note){return Object.assign({array:cloneArr(arr),note:note||''},hl);}
+
+function generateSelectionSteps(arr){
+  let a=cloneArr(arr),steps=[],n=a.length,sorted=[];
+  steps.push(frame(a,{},"Array awal. Selection Sort mencari elemen terkecil satu per satu."));
+  for(let i=0;i<n-1;i++){
+    let minIdx=i;
+    steps.push(frame(a,{compare:[i],pivot:minIdx,sortedIdx:sorted.slice()},`Anggap indeks ${i} sebagai kandidat terkecil sementara.`));
+    for(let j=i+1;j<n;j++){
+      steps.push(frame(a,{compare:[minIdx,j],sortedIdx:sorted.slice()},`Bandingkan indeks ${minIdx} (${a[minIdx]}) dengan indeks ${j} (${a[j]}).`));
+      if(a[j]<a[minIdx]){ minIdx=j; steps.push(frame(a,{compare:[minIdx],sortedIdx:sorted.slice()},`Nilai lebih kecil ditemukan di indeks ${j}. Kandidat diperbarui.`)); }
+    }
+    if(minIdx!==i){ [a[i],a[minIdx]]=[a[minIdx],a[i]]; steps.push(frame(a,{swap:[i,minIdx],sortedIdx:sorted.slice()},`Tukar indeks ${i} dengan indeks ${minIdx}.`)); }
+    sorted.push(i);
+    steps.push(frame(a,{sortedIdx:sorted.slice()},`Indeks ${i} sudah berada di posisi akhirnya.`));
+  }
+  sorted.push(n-1);
+  steps.push(frame(a,{sortedIdx:sorted.slice()},"Selesai! Array sudah terurut."));
+  return steps;
+}
+function generateInsertionSteps(arr){
+  let a=cloneArr(arr),steps=[],n=a.length;
+  steps.push(frame(a,{sortedIdx:[0]},"Anggap elemen pertama sudah terurut."));
+  for(let i=1;i<n;i++){
+    let key=a[i],j=i-1;
+    steps.push(frame(a,{compare:[i]},`Ambil elemen indeks ${i} (${key}) sebagai kunci yang akan disisipkan.`));
+    while(j>=0 && a[j]>key){
+      a[j+1]=a[j];
+      steps.push(frame(a,{swap:[j,j+1]},`${a[j]} > ${key}, geser ke kanan.`));
+      j--;
+    }
+    a[j+1]=key;
+    steps.push(frame(a,{sortedIdx:Array.from({length:i+1},(_,k)=>k)},`Sisipkan kunci ${key} di posisi ${j+1}.`));
+  }
+  steps.push(frame(a,{sortedIdx:Array.from({length:n},(_,k)=>k)},"Selesai! Array sudah terurut."));
+  return steps;
+}
+function generateBubbleSteps(arr){
+  let a=cloneArr(arr),steps=[],n=a.length,sorted=[];
+  steps.push(frame(a,{},"Array awal."));
+  for(let i=0;i<n-1;i++){
+    let swapped=false;
+    for(let j=0;j<n-1-i;j++){
+      steps.push(frame(a,{compare:[j,j+1],sortedIdx:sorted.slice()},`Bandingkan indeks ${j} dan ${j+1}.`));
+      if(a[j]>a[j+1]){ [a[j],a[j+1]]=[a[j+1],a[j]]; swapped=true; steps.push(frame(a,{swap:[j,j+1],sortedIdx:sorted.slice()},"Urutan salah, tukar posisi.")); }
+    }
+    sorted.unshift(n-1-i);
+    steps.push(frame(a,{sortedIdx:sorted.slice()},`Elemen terbesar "menggelembung" ke posisi ${n-1-i}.`));
+    if(!swapped) break;
+  }
+  steps.push(frame(a,{sortedIdx:Array.from({length:n},(_,k)=>k)},"Selesai! Array sudah terurut."));
+  return steps;
+}
+function generateMergeSteps(arr){
+  let a=cloneArr(arr),steps=[],n=a.length;
+  steps.push(frame(a,{},"Array awal. Merge Sort membagi array menjadi dua bagian secara rekursif."));
+  function mergeSort(lo,hi){
+    if(hi-lo<=1) return;
+    let mid=Math.floor((lo+hi)/2);
+    steps.push(frame(a,{range:[lo,hi-1]},`Bagi rentang [${lo}..${hi-1}] menjadi [${lo}..${mid-1}] dan [${mid}..${hi-1}].`));
+    mergeSort(lo,mid); mergeSort(mid,hi);
+    let left=a.slice(lo,mid), right=a.slice(mid,hi);
+    let i=0,j=0,k=lo;
+    while(i<left.length&&j<right.length){
+      steps.push(frame(a,{compare:[lo+i,mid+j],range:[lo,hi-1]},`Bandingkan ${left[i]} dan ${right[j]} untuk digabung.`));
+      if(left[i]<=right[j]){ a[k]=left[i]; i++; } else { a[k]=right[j]; j++; }
+      steps.push(frame(a,{swap:[k],range:[lo,hi-1]},`Tempatkan ${a[k]} pada indeks ${k}.`));
+      k++;
+    }
+    while(i<left.length){ a[k]=left[i]; steps.push(frame(a,{swap:[k],range:[lo,hi-1]},`Sisipkan sisa ${a[k]} pada indeks ${k}.`)); i++; k++; }
+    while(j<right.length){ a[k]=right[j]; steps.push(frame(a,{swap:[k],range:[lo,hi-1]},`Sisipkan sisa ${a[k]} pada indeks ${k}.`)); j++; k++; }
+    steps.push(frame(a,{sortedIdx:Array.from({length:hi-lo},(_,x)=>lo+x)},`Rentang [${lo}..${hi-1}] sudah tergabung dan terurut.`));
+  }
+  mergeSort(0,n);
+  steps.push(frame(a,{sortedIdx:Array.from({length:n},(_,k)=>k)},"Selesai! Array sudah terurut."));
+  return steps;
+}
+function generateQuickSteps(arr){
+  let a=cloneArr(arr),steps=[],n=a.length;
+  steps.push(frame(a,{},"Array awal. Quick Sort memilih pivot lalu mempartisi array di sekitarnya."));
+  function quickSort(lo,hi){
+    if(lo>=hi) return;
+    let pivot=a[hi];
+    steps.push(frame(a,{pivot:hi,range:[lo,hi]},`Pilih elemen terakhir (${pivot}) sebagai pivot untuk rentang [${lo}..${hi}].`));
+    let i=lo-1;
+    for(let j=lo;j<hi;j++){
+      steps.push(frame(a,{compare:[j,hi],pivot:hi,range:[lo,hi]},`Bandingkan ${a[j]} dengan pivot ${pivot}.`));
+      if(a[j]<pivot){ i++; [a[i],a[j]]=[a[j],a[i]]; steps.push(frame(a,{swap:[i,j],pivot:hi,range:[lo,hi]},`${a[i]} lebih kecil dari pivot, tukar ke posisi ${i}.`)); }
+    }
+    [a[i+1],a[hi]]=[a[hi],a[i+1]];
+    steps.push(frame(a,{swap:[i+1,hi],range:[lo,hi]},`Tukar pivot ke posisi ${i+1}, posisi akhirnya.`));
+    quickSort(lo,i); quickSort(i+2,hi);
+  }
+  quickSort(0,n-1);
+  steps.push(frame(a,{sortedIdx:Array.from({length:n},(_,k)=>k)},"Selesai! Array sudah terurut."));
+  return steps;
+}
+function generateLinearSteps(arr,target){
+  let steps=[]; steps.push(frame(arr,{},`Cari nilai ${target} dari kiri ke kanan, satu per satu.`));
+  for(let i=0;i<arr.length;i++){
+    steps.push(frame(arr,{compare:[i]},`Periksa indeks ${i}: apakah ${arr[i]} = ${target}?`));
+    if(arr[i]===target){ steps.push(frame(arr,{found:i},`Ditemukan! ${target} ada di indeks ${i}.`)); return steps; }
+  }
+  steps.push(frame(arr,{},`${target} tidak ditemukan dalam array.`));
+  return steps;
+}
+function generateBinarySteps(arr,target){
+  let sorted=cloneArr(arr).sort((a,b)=>a-b);
+  let steps=[],lo=0,hi=sorted.length-1;
+  steps.push(frame(sorted,{},`Array harus terurut dulu. Cari ${target} dengan membagi dua rentang pencarian.`));
+  while(lo<=hi){
+    let mid=Math.floor((lo+hi)/2);
+    steps.push(frame(sorted,{compare:[mid],range:[lo,hi]},`Cek posisi tengah, indeks ${mid} (${sorted[mid]}).`));
+    if(sorted[mid]===target){ steps.push(frame(sorted,{found:mid},`Ditemukan! ${target} ada di indeks ${mid}.`)); return steps; }
+    else if(sorted[mid]<target){ lo=mid+1; steps.push(frame(sorted,{range:[lo,hi]},`${sorted[mid]} < ${target}, lanjut cari di separuh kanan.`)); }
+    else{ hi=mid-1; steps.push(frame(sorted,{range:[lo,hi]},`${sorted[mid]} > ${target}, lanjut cari di separuh kiri.`)); }
+  }
+  steps.push(frame(sorted,{},`${target} tidak ditemukan dalam array.`));
+  return steps;
+}
+
+/* =========================================================
+   VISUALIZER
+========================================================= */
+class Visualizer{
+  constructor(root,opts){
+    this.root=root; this.opts=opts;
+    this.steps=this.computeSteps();
+    this.idx=0; this.playing=false; this.speed=550;
+    this.build(); this.render();
+  }
+  computeSteps(){
+    const {algo,arr,target}=this.opts;
+    switch(algo){
+      case 'selection': return generateSelectionSteps(arr);
+      case 'insertion': return generateInsertionSteps(arr);
+      case 'bubble': return generateBubbleSteps(arr);
+      case 'merge': return generateMergeSteps(arr);
+      case 'quick': return generateQuickSteps(arr);
+      case 'linear': return generateLinearSteps(arr,target);
+      case 'binary': return generateBinarySteps(arr,target);
+    }
+  }
+  build(){
+    this.root.innerHTML=`<div class="viz-stage"></div>
+      <p class="viz-note"></p>
+      <div class="viz-controls">
+        <button class="btn small" data-act="restart">⏮ Ulang</button>
+        <button class="btn small" data-act="prev">◀</button>
+        <button class="btn small primary" data-act="play">▶ Mainkan</button>
+        <button class="btn small" data-act="next">▶</button>
+        <input type="range" data-act="speed" min="150" max="1400" step="50" value="850">
+        <span class="viz-counter"></span>
+      </div>`;
+    this.stage=this.root.querySelector('.viz-stage');
+    this.note=this.root.querySelector('.viz-note');
+    this.counter=this.root.querySelector('.viz-counter');
+    this.root.querySelectorAll('[data-act]').forEach(el=>{
+      el.addEventListener(el.tagName==='INPUT'?'input':'click',e=>this.handle(e));
+    });
+  }
+  handle(e){
+    const act=e.currentTarget.dataset.act;
+    if(act==='restart'){ this.idx=0; this.playing=false; this.updatePlayBtn(); this.render(); }
+    if(act==='prev'){ this.playing=false; this.updatePlayBtn(); this.idx=Math.max(0,this.idx-1); this.render(); }
+    if(act==='next'){ this.playing=false; this.updatePlayBtn(); this.idx=Math.min(this.steps.length-1,this.idx+1); this.render(); }
+    if(act==='play'){ this.togglePlay(); }
+    if(act==='speed'){ this.speed=1550-Number(e.currentTarget.value); }
+  }
+  togglePlay(){ this.playing=!this.playing; this.updatePlayBtn(); if(this.playing) this.tick(); }
+  updatePlayBtn(){ const b=this.root.querySelector('[data-act="play"]'); if(b) b.textContent=this.playing?'⏸ Jeda':'▶ Mainkan'; }
+  tick(){
+    if(!this.playing) return;
+    if(this.idx>=this.steps.length-1){ this.playing=false; this.updatePlayBtn(); return; }
+    this.idx++; this.render();
+    setTimeout(()=>this.tick(),this.speed);
+  }
+  render(){
+    const fr=this.steps[this.idx];
+    const maxVal=Math.max(...fr.array,1);
+    this.stage.innerHTML='';
+    fr.array.forEach((val,i)=>{
+      let s='default';
+      if(fr.found===i) s='found';
+      else if(fr.sortedIdx&&fr.sortedIdx.includes(i)) s='sorted';
+      else if(fr.swap&&fr.swap.includes(i)) s='swap';
+      else if(fr.pivot===i) s='pivot';
+      else if(fr.compare&&fr.compare.includes(i)) s='compare';
+      else if(fr.range&&(i<fr.range[0]||i>fr.range[1])) s='dim';
+      const el=document.createElement('div');
+      el.className='block state-'+s;
+      el.style.height=Math.max(12,(val/maxVal)*168)+'px';
+      el.innerHTML=`<span class="block-label">${val}</span>`;
+      this.stage.appendChild(el);
+    });
+    this.note.textContent=fr.note;
+    this.counter.textContent=`Langkah ${this.idx+1}/${this.steps.length}`;
+  }
+}
+function randomArray(n=8,min=8,max=95){ return Array.from({length:n},()=>Math.floor(min+Math.random()*(max-min))); }
+
+/* =========================================================
+   MATERI CONTENT
+========================================================= */
+const ALGO_DATA={
+  selection:{
+    nama:'Selection Sort (Pengurutan Pilihan)',
+    ringkas:'Berulang kali memilih elemen terkecil dari bagian yang belum terurut, lalu menukarnya ke depan.',
+    cara:['Cari elemen terkecil di seluruh array.','Tukar dengan elemen di posisi pertama.','Ulangi untuk sisa array yang belum terurut, mulai dari posisi kedua, dan seterusnya.'],
+    pseudo:`untuk i = 0 sampai n-2
+  minIdx = i
+  untuk j = i+1 sampai n-1
+    jika arr[j] < arr[minIdx] maka
+      minIdx = j
+  tukar arr[i] dengan arr[minIdx]`,
+    kompleksitas:{best:'O(n²)',avg:'O(n²)',worst:'O(n²)',space:'O(1)'},
+    kapan:'Cocok untuk data berukuran kecil atau saat jumlah penukaran (swap) ingin diminimalkan, karena swap hanya terjadi n kali.'
+  },
+  insertion:{
+    nama:'Insertion Sort (Pengurutan Penyisipan)',
+    ringkas:'Mengambil elemen satu per satu dan menyisipkannya ke posisi yang tepat pada bagian yang sudah terurut, seperti menyusun kartu di tangan.',
+    cara:['Anggap elemen pertama sudah terurut.','Ambil elemen berikutnya sebagai "kunci".','Geser elemen-elemen yang lebih besar ke kanan, lalu sisipkan kunci pada posisi yang tepat.'],
+    pseudo:`untuk i = 1 sampai n-1
+  key = arr[i]
+  j = i - 1
+  selama j >= 0 dan arr[j] > key
+    arr[j+1] = arr[j]
+    j = j - 1
+  arr[j+1] = key`,
+    kompleksitas:{best:'O(n)',avg:'O(n²)',worst:'O(n²)',space:'O(1)'},
+    kapan:'Sangat efisien untuk data yang sudah hampir terurut, dan cocok untuk data yang datang satu per satu (streaming).'
+  },
+  bubble:{
+    nama:'Bubble Sort (Pengurutan Gelembung)',
+    ringkas:'Membandingkan pasangan elemen bersebelahan dan menukarnya jika urutannya salah, sehingga elemen terbesar perlahan "menggelembung" ke ujung.',
+    cara:['Bandingkan elemen ke-0 dan ke-1, tukar jika salah urutan.','Lanjutkan ke pasangan berikutnya hingga akhir array.','Ulangi seluruh proses; setiap putaran, elemen terbesar berikutnya sampai di posisi akhirnya.'],
+    pseudo:`untuk i = 0 sampai n-2
+  untuk j = 0 sampai n-2-i
+    jika arr[j] > arr[j+1] maka
+      tukar arr[j] dengan arr[j+1]`,
+    kompleksitas:{best:'O(n)',avg:'O(n²)',worst:'O(n²)',space:'O(1)'},
+    kapan:'Sederhana untuk dipelajari dan dijelaskan, tapi kurang efisien untuk data besar. Baik sebagai pengantar konsep pengurutan.'
+  },
+  merge:{
+    nama:'Merge Sort (Pengurutan Penggabungan)',
+    ringkas:'Strategi "bagi dan taklukkan": membagi array menjadi dua bagian secara rekursif hingga berukuran 1, lalu menggabungkannya kembali secara terurut.',
+    cara:['Bagi array menjadi dua bagian sama besar secara rekursif hingga tiap bagian berisi 1 elemen.','Gabungkan (merge) dua bagian yang sudah terurut menjadi satu bagian terurut.','Ulangi penggabungan hingga seluruh array tergabung kembali.'],
+    pseudo:`mergeSort(arr, lo, hi):
+  jika hi - lo <= 1 maka kembali
+  mid = (lo + hi) / 2
+  mergeSort(arr, lo, mid)
+  mergeSort(arr, mid, hi)
+  merge(arr, lo, mid, hi)`,
+    kompleksitas:{best:'O(n log n)',avg:'O(n log n)',worst:'O(n log n)',space:'O(n)'},
+    kapan:'Andal untuk data besar karena performanya stabil (selalu O(n log n)), tetapi butuh memori tambahan untuk penggabungan.'
+  },
+  quick:{
+    nama:'Quick Sort (Pengurutan Cepat)',
+    ringkas:'Memilih satu elemen sebagai "pivot", lalu mempartisi array sehingga elemen lebih kecil di kiri pivot dan lebih besar di kanan, dan mengulangi proses ini secara rekursif.',
+    cara:['Pilih pivot (misalnya elemen terakhir).','Partisi array: elemen lebih kecil dari pivot dipindah ke kiri, lebih besar ke kanan.','Terapkan Quick Sort secara rekursif pada bagian kiri dan kanan pivot.'],
+    pseudo:`quickSort(arr, lo, hi):
+  jika lo >= hi maka kembali
+  pivot = arr[hi]
+  i = lo - 1
+  untuk j = lo sampai hi-1
+    jika arr[j] < pivot maka
+      i = i + 1
+      tukar arr[i] dengan arr[j]
+  tukar arr[i+1] dengan arr[hi]
+  quickSort(arr, lo, i)
+  quickSort(arr, i+2, hi)`,
+    kompleksitas:{best:'O(n log n)',avg:'O(n log n)',worst:'O(n²)',space:'O(log n)'},
+    kapan:'Umumnya tercepat pada praktiknya untuk data acak berukuran besar, meski kasus terburuknya bisa lambat jika pivot selalu terpilih buruk.'
+  }
+};
+const SEARCH_DATA={
+  linear:{nama:'Sequential Search (Pencarian Berurutan)',ringkas:'Memeriksa setiap elemen dari awal hingga ditemukan atau seluruh array habis diperiksa. Tidak memerlukan data terurut.',kompleksitas:{best:'O(1)',avg:'O(n)',worst:'O(n)',space:'O(1)'}},
+  binary:{nama:'Binary Search (Pencarian Biner)',ringkas:'Membagi dua rentang pencarian berulang kali dengan membandingkan target ke elemen tengah. Data wajib sudah terurut.',kompleksitas:{best:'O(1)',avg:'O(log n)',worst:'O(log n)',space:'O(1)'}}
+};
+
+function buildMateri(){
+  const tabWrap=document.getElementById('materiTabs');
+  const panelWrap=document.getElementById('materiPanels');
+  const keys=Object.keys(ALGO_DATA);
+  keys.forEach((key,i)=>{
+    const t=document.createElement('button');
+    t.className='tab-btn'+(i===0?' active':'');
+    t.textContent=ALGO_DATA[key].nama.split(' (')[0];
+    t.addEventListener('click',()=>{
+      tabWrap.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      t.classList.add('active');
+      panelWrap.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      document.getElementById('panel-'+key).classList.add('active');
+    });
+    tabWrap.appendChild(t);
+
+    const d=ALGO_DATA[key];
+    const panel=document.createElement('div');
+    panel.className='tab-panel'+(i===0?' active':'');
+    panel.id='panel-'+key;
+    panel.innerHTML=`
+      <div class="card">
+        <h3>${d.nama}</h3>
+        <p>${d.ringkas}</p>
+        <h4 style="font-size:13.5px;margin-top:14px;">Cara Kerja</h4>
+        <ul class="check-list">${d.cara.map(c=>`<li>${c}</li>`).join('')}</ul>
+        <h4 style="font-size:13.5px;">Pseudokode</h4>
+        <pre class="pseudocode">${d.pseudo}</pre>
+        <table class="complexity">
+          <tr><th>Best Case</th><th>Average Case</th><th>Worst Case</th><th>Ruang</th></tr>
+          <tr><td class="mono">${d.kompleksitas.best}</td><td class="mono">${d.kompleksitas.avg}</td><td class="mono">${d.kompleksitas.worst}</td><td class="mono">${d.kompleksitas.space}</td></tr>
+        </table>
+        <p><b style="color:var(--text)">Kapan digunakan:</b> ${d.kapan}</p>
+        <h4 style="font-size:13.5px;">Visualisasi</h4>
+        <div class="btn-row" style="margin-top:0;margin-bottom:10px;">
+          <button class="btn small" data-regen="${key}">🎲 Acak Ulang Data</button>
+        </div>
+        <div class="viz-holder" id="viz-${key}"></div>
+      </div>`;
+    panelWrap.appendChild(panel);
+  });
+  keys.forEach(key=>{
+    const holder=document.getElementById('viz-'+key);
+    let arr=randomArray(9);
+    new Visualizer(holder,{algo:key,arr});
+    document.querySelector(`[data-regen="${key}"]`).addEventListener('click',()=>{
+      arr=randomArray(9);
+      new Visualizer(holder,{algo:key,arr});
+    });
+  });
+
+  // search tabs
+  const sTabWrap=document.getElementById('searchTabs');
+  const sPanelWrap=document.getElementById('searchPanels');
+  const skeys=Object.keys(SEARCH_DATA);
+  skeys.forEach((key,i)=>{
+    const t=document.createElement('button');
+    t.className='tab-btn'+(i===0?' active':'');
+    t.textContent=SEARCH_DATA[key].nama.split(' (')[0];
+    t.addEventListener('click',()=>{
+      sTabWrap.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      t.classList.add('active');
+      sPanelWrap.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+      document.getElementById('spanel-'+key).classList.add('active');
+    });
+    sTabWrap.appendChild(t);
+
+    const d=SEARCH_DATA[key];
+    const panel=document.createElement('div');
+    panel.className='tab-panel'+(i===0?' active':'');
+    panel.id='spanel-'+key;
+    panel.innerHTML=`
+      <p>${d.ringkas}</p>
+      <table class="complexity">
+        <tr><th>Best</th><th>Average</th><th>Worst</th><th>Ruang</th></tr>
+        <tr><td class="mono">${d.kompleksitas.best}</td><td class="mono">${d.kompleksitas.avg}</td><td class="mono">${d.kompleksitas.worst}</td><td class="mono">${d.kompleksitas.space}</td></tr>
+      </table>
+      <div class="grid2">
+        <div class="field"><label>Target Angka Dicari</label><input type="number" id="target-${key}" value="${key==='binary'?'-':''}"></div>
+        <div class="field" style="display:flex;align-items:flex-end;"><button class="btn small" data-sregen="${key}" style="height:44px;">🎲 Acak Data &amp; Cari</button></div>
+      </div>
+      <div class="viz-holder" id="sviz-${key}"></div>`;
+    sPanelWrap.appendChild(panel);
+  });
+  skeys.forEach(key=>{
+    const holder=document.getElementById('sviz-'+key);
+    function run(){
+      const arr=randomArray(9,10,80);
+      const target = Math.random()<0.7 ? arr[Math.floor(Math.random()*arr.length)] : Math.floor(10+Math.random()*80);
+      document.getElementById('target-'+key).value=target;
+      new Visualizer(holder,{algo:key,arr,target});
+    }
+    run();
+    document.querySelector(`[data-sregen="${key}"]`).addEventListener('click',run);
+  });
+}
+
+/* =========================================================
+   SIMULASI (studi kasus)
+========================================================= */
+const SIM_CASES=[
+  {
+    id:'sim1',
+    judul:'Studi Kasus 1 — Klasemen Turnamen Game Sekolah',
+    cerita:'Panitia turnamen e-sport sekolah punya daftar skor 10 peserta yang belum urut. Mereka butuh klasemen dari skor tertinggi ke terendah untuk ditampilkan di layar aula, dan prosesnya harus cepat karena akan diulang tiap ronde.',
+    pertanyaan:[
+      'Bagaimana kamu memecah masalah ini menjadi langkah-langkah kecil (dekomposisi)?',
+      'Algoritma pengurutan mana yang kamu pilih, dan mengapa cocok untuk kebutuhan "cepat & diulang tiap ronde"?'
+    ],
+    arr:[62,88,45,90,71,55,68,80,49,77],
+    defaultAlgo:'quick'
+  },
+  {
+    id:'sim2',
+    judul:'Studi Kasus 2 — Mencari Nomor Peserta Lomba',
+    cerita:'Panitia lomba menempelkan daftar 200 nomor peserta di papan pengumuman secara acak. Saat lomba dimulai, panitia harus menemukan apakah nomor tertentu terdaftar. Di sisi lain, panitia lain punya salinan daftar yang sudah diurutkan di komputer.',
+    pertanyaan:[
+      'Jika daftar di papan belum diurutkan, algoritma pencarian apa yang harus dipakai?',
+      'Jika daftar di komputer sudah terurut, algoritma apa yang lebih efisien, dan seberapa besar bedanya untuk 200 data?'
+    ],
+    arr:[14,52,63,71,8,90,33,45,21,58],
+    defaultAlgo:'linear'
+  }
+];
+function buildSimulasi(){
+  const wrap=document.getElementById('simCases');
+  SIM_CASES.forEach(c=>{
+    const card=document.createElement('div');
+    card.className='card';
+    const isSearch=c.id==='sim2';
+    card.innerHTML=`
+      <span class="eyebrow">Simulasi</span>
+      <h3>${c.judul}</h3>
+      <p>${c.cerita}</p>
+      <div class="field" style="max-width:320px;">
+        <label>Pilih Algoritma</label>
+        <select id="algo-${c.id}">
+          ${isSearch
+            ? `<option value="linear">Sequential Search</option><option value="binary">Binary Search</option>`
+            : `<option value="selection">Selection Sort</option><option value="insertion">Insertion Sort</option><option value="bubble">Bubble Sort</option><option value="merge">Merge Sort</option><option value="quick" selected>Quick Sort</option>`}
+        </select>
+      </div>
+      ${isSearch? `<div class="field" style="max-width:320px;"><label>Cari Nomor</label><input type="number" id="target-${c.id}" value="${c.arr[3]}"></div>`:''}
+      <div class="btn-row"><button class="btn primary" data-run="${c.id}">▶ Jalankan Simulasi</button></div>
+      <div class="viz-holder" id="viz-${c.id}"></div>
+      <hr class="div">
+      <h4 style="font-size:13.5px;">Pertanyaan Pemantik</h4>
+      ${c.pertanyaan.map((q,i)=>`<div class="field"><label>${q}</label><textarea rows="2" id="ans-${c.id}-${i}" placeholder="Tulis jawabanmu di sini..."></textarea></div>`).join('')}
+    `;
+    wrap.appendChild(card);
+    const holder=document.getElementById('viz-'+c.id);
+    new Visualizer(holder,{algo:c.defaultAlgo,arr:c.arr,target:isSearch?c.arr[3]:undefined});
+    document.querySelector(`[data-run="${c.id}"]`).addEventListener('click',()=>{
+      const algo=document.getElementById('algo-'+c.id).value;
+      const target=isSearch?Number(document.getElementById('target-'+c.id).value):undefined;
+      new Visualizer(holder,{algo,arr:c.arr,target});
+    });
+  });
+}
+
+/* =========================================================
+   QUIZ
+========================================================= */
+const QUIZ_DATA={
+  mudah:[
+    {q:'Apa tujuan utama dari algoritma pengurutan (sorting)?',opts:['Menghapus data duplikat','Menyusun data sesuai urutan tertentu (naik/turun)','Mengubah tipe data','Mencari nilai maksimum saja'],correct:1,exp:'Algoritma pengurutan menyusun kumpulan data menjadi urutan tertentu, misalnya dari terkecil ke terbesar.'},
+    {q:'Pada Bubble Sort, apa yang dilakukan jika dua elemen bersebelahan berada dalam urutan yang salah?',opts:['Dibiarkan saja','Ditukar posisinya','Dihapus salah satu','Digabungkan'],correct:1,exp:'Bubble Sort menukar (swap) dua elemen bersebelahan yang urutannya salah.'},
+    {q:'Syarat utama agar Binary Search bisa digunakan adalah...',opts:['Data harus berupa angka genap','Data harus sudah terurut','Data harus kurang dari 10 elemen','Data harus berupa teks'],correct:1,exp:'Binary Search hanya bekerja benar jika data sudah terurut, karena strateginya membagi dua rentang pencarian.'}
+  ],
+  sedang:[
+    {q:'Mengapa Insertion Sort sangat efisien untuk data yang sudah hampir terurut?',opts:['Karena selalu membagi array jadi dua','Karena jumlah pergeseran elemen yang dibutuhkan sangat sedikit','Karena tidak butuh perbandingan sama sekali','Karena memakai pivot'],correct:1,exp:'Jika data hampir terurut, sedikit elemen yang perlu digeser untuk menyisipkan kunci ke posisi tepat, sehingga kompleksitasnya mendekati O(n).'},
+    {q:'Apa perbedaan mendasar antara Merge Sort dan Quick Sort?',opts:['Merge Sort tidak rekursif, Quick Sort rekursif','Merge Sort membagi lalu menggabungkan hasil terurut, Quick Sort mempartisi berdasarkan pivot sebelum membagi','Keduanya sama persis','Quick Sort hanya untuk data string'],correct:1,exp:'Merge Sort membagi dulu lalu menggabungkan (merge) hasil yang sudah terurut, sedangkan Quick Sort mempartisi data di sekitar pivot sebelum rekursi berikutnya.'},
+    {q:'Jika sebuah daftar 1.000.000 data belum terurut dan hanya perlu dicari sekali saja, algoritma apa yang paling masuk akal?',opts:['Mengurutkan dulu baru Binary Search','Langsung Sequential Search','Insertion Sort dulu','Selection Sort dulu'],correct:1,exp:'Untuk pencarian tunggal pada data yang belum terurut, mengurutkan dulu (yang butuh O(n log n)) justru lebih mahal daripada langsung Sequential Search satu kali O(n).'}
+  ],
+  sulit:[
+    {q:'Array [5, 2, 8, 1] diurutkan naik dengan Selection Sort. Setelah iterasi pertama (i=0) selesai, seperti apa isi array-nya?',opts:['[1, 2, 8, 5]','[2, 5, 8, 1]','[1, 5, 8, 2]','[5, 2, 8, 1] (tidak berubah)'],correct:0,exp:'Elemen terkecil (1) dicari di seluruh array lalu ditukar ke posisi indeks 0, menghasilkan [1, 2, 8, 5].'},
+    {q:'Pada Quick Sort dengan pivot elemen terakhir, mengapa kasus terburuknya bisa mencapai O(n²)?',opts:['Karena pivot selalu berada di tengah','Karena partisi bisa sangat tidak seimbang, misalnya saat data sudah terurut','Karena rekursi tidak pernah berhenti','Karena Quick Sort tidak memakai perbandingan'],correct:1,exp:'Jika pivot yang dipilih selalu menjadi elemen terkecil/terbesar (misalnya data sudah terurut), partisi jadi sangat tidak seimbang (1 vs n-1) sehingga kedalaman rekursi menjadi O(n), menghasilkan total O(n²).'},
+    {q:'Mengapa Merge Sort butuh ruang memori tambahan O(n), sedangkan Quick Sort dan Insertion Sort umumnya cukup O(1) atau O(log n)?',opts:['Merge Sort memakai array sementara untuk menggabungkan dua bagian, sedangkan yang lain menukar elemen langsung di tempat (in-place)','Merge Sort memakai lebih banyak variabel angka','Quick Sort tidak melakukan perbandingan','Merge Sort tidak rekursif'],correct:0,exp:'Proses merge pada Merge Sort menyalin elemen ke array sementara sebelum digabungkan kembali, sehingga butuh ruang ekstra sebanding ukuran data (O(n)). Insertion dan Quick Sort menukar elemen langsung di array asli (in-place).'}
+  ]
+};
+function buildQuiz(){
+  const wrap=document.getElementById('quizLevels');
+  let totalQ=0;
+  Object.keys(QUIZ_DATA).forEach(level=>{
+    const section=document.createElement('div');
+    section.className='card';
+    section.innerHTML=`<span class="eyebrow">Level ${level.charAt(0).toUpperCase()+level.slice(1)}</span>`;
+    QUIZ_DATA[level].forEach((q,qi)=>{
+      totalQ++;
+      const qid=level+'-'+qi;
+      const block=document.createElement('div');
+      block.className='q-block';
+      block.innerHTML=`
+        <span class="q-tag ${level}">${level}</span>
+        <p style="color:var(--text);font-weight:600;margin-bottom:10px;">${q.q}</p>
+        <div class="opts" id="opts-${qid}">
+          ${q.opts.map((o,oi)=>`<label class="opt-label" data-oi="${oi}"><input type="radio" name="q-${qid}" value="${oi}"> ${o}</label>`).join('')}
+        </div>
+        <div class="btn-row" style="margin-top:8px;"><button class="btn small primary" data-check="${qid}">Cek Jawaban</button></div>
+        <div class="q-feedback" id="fb-${qid}"></div>
+      `;
+      section.appendChild(block);
+    });
+    wrap.appendChild(section);
+  });
+  state.quiz.total=totalQ;
+  wrap.querySelectorAll('[data-check]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const qid=btn.dataset.check;
+      const [level,qiStr]=qid.split('-'); const qi=Number(qiStr);
+      const qdata=QUIZ_DATA[level][qi];
+      const selected=document.querySelector(`input[name="q-${qid}"]:checked`);
+      const fb=document.getElementById('fb-'+qid);
+      const optsWrap=document.getElementById('opts-'+qid);
+      if(!selected){ fb.className='q-feedback incorrect'; fb.textContent='Pilih salah satu jawaban dulu ya.'; return; }
+      if(btn.dataset.answered==='1') return;
+      btn.dataset.answered='1';
+      const val=Number(selected.value);
+      optsWrap.querySelectorAll('.opt-label').forEach(l=>{
+        const oi=Number(l.dataset.oi);
+        if(oi===qdata.correct) l.classList.add('correct-ans');
+        else if(oi===val) l.classList.add('wrong-ans');
+      });
+      if(val===qdata.correct){
+        fb.className='q-feedback correct'; fb.textContent='✅ Benar! '+qdata.exp;
+        state.quiz.correct++;
+      } else {
+        fb.className='q-feedback incorrect'; fb.textContent='❌ Belum tepat. '+qdata.exp;
+      }
+      updateQuizScore();
+      btn.disabled=true;
+    });
+  });
+}
+function updateQuizScore(){
+  const answered=document.querySelectorAll('[data-answered="1"]').length;
+  const pct=state.quiz.total? Math.round((state.quiz.correct/state.quiz.total)*100):0;
+  document.getElementById('quizScoreBar').style.width=pct+'%';
+  document.getElementById('quizScoreText').textContent=`${state.quiz.correct} benar dari ${answered} soal dijawab (total ${state.quiz.total} soal) — ${pct}%`;
+}
+
+/* =========================================================
+   PRE / POST TEST
+========================================================= */
+const PRETEST_Q=[
+  {q:'Algoritma adalah...',opts:['Bahasa pemrograman tertentu','Urutan langkah logis dan terbatas untuk menyelesaikan masalah','Nama sebuah aplikasi','Perangkat keras komputer'],correct:1},
+  {q:'Langkah pertama dalam berpikir algoritmik ketika menghadapi masalah kompleks adalah...',opts:['Langsung menulis kode','Memahami & memecah masalah menjadi bagian lebih kecil','Menghapus data yang ada','Menebak jawaban akhir'],correct:1},
+  {q:'Array [4, 2, 7, 1] setelah diurutkan naik (ascending) menjadi...',opts:['[7,4,2,1]','[1,2,4,7]','[4,2,7,1]','[2,4,1,7]'],correct:1},
+  {q:'Algoritma yang cocok untuk data yang hampir terurut adalah...',opts:['Bubble Sort','Insertion Sort','Merge Sort selalu','Tidak ada yang cocok'],correct:1},
+  {q:'Binary Search mengharuskan data...',opts:['Berjumlah genap','Berupa angka bulat saja','Sudah terurut','Berukuran kecil saja'],correct:2},
+  {q:'Istilah "kompleksitas O(n²)" pada algoritma menggambarkan...',opts:['Jumlah baris kode','Perkiraan waktu/kerja yang tumbuh sebanding kuadrat jumlah data','Ukuran file program','Jumlah variabel yang dipakai'],correct:1}
+];
+const POSTTEST_Q=[
+  {q:'Yang dimaksud dengan algoritma adalah...',opts:['Sekumpulan variabel','Langkah-langkah logis, jelas, dan terbatas untuk memecahkan masalah','Sebuah perangkat lunak siap pakai','Jenis struktur data'],correct:1},
+  {q:'Dalam menyelesaikan masalah kompleks, sebelum merancang solusi kita sebaiknya...',opts:['Langsung mencoba-coba','Memecah masalah menjadi bagian-bagian yang lebih sederhana','Mengabaikan detail masalah','Menunggu orang lain menyelesaikannya'],correct:1},
+  {q:'Array [9, 3, 6, 1] jika diurutkan naik akan menjadi...',opts:['[9,6,3,1]','[1,3,6,9]','[3,9,1,6]','[1,9,3,6]'],correct:1},
+  {q:'Algoritma pengurutan yang bekerja dengan strategi "bagi dan gabungkan" adalah...',opts:['Bubble Sort','Selection Sort','Merge Sort','Insertion Sort'],correct:2},
+  {q:'Sequential Search berbeda dari Binary Search karena...',opts:['Sequential Search butuh data terurut, Binary Search tidak','Sequential Search memeriksa satu per satu tanpa syarat data terurut','Keduanya sama persis','Sequential Search lebih cepat untuk semua kasus'],correct:1},
+  {q:'Notasi O(n log n) pada algoritma pengurutan umumnya menunjukkan performa yang...',opts:['Lebih lambat dari O(n²) untuk data besar','Lebih efisien dibanding O(n²) untuk data besar','Sama saja dengan O(1)','Tidak berkaitan dengan jumlah data'],correct:1}
+];
+function buildPrePostTest(containerId,questions,prefix){
+  const wrap=document.getElementById(containerId);
+  questions.forEach((q,qi)=>{
+    const div=document.createElement('div');
+    div.className='q-block';
+    div.innerHTML=`<p style="color:var(--text);font-weight:600;margin-bottom:10px;">${qi+1}. ${q.q}</p>
+      <div class="opts">${q.opts.map((o,oi)=>`<label class="opt-label"><input type="radio" name="${prefix}-${qi}" value="${oi}"> ${o}</label>`).join('')}</div>`;
+    wrap.appendChild(div);
+  });
+}
+function gradeTest(questions,prefix){
+  let correct=0;
+  questions.forEach((q,qi)=>{
+    const sel=document.querySelector(`input[name="${prefix}-${qi}"]:checked`);
+    if(sel && Number(sel.value)===q.correct) correct++;
+  });
+  return {correct,total:questions.length};
+}
+
+/* =========================================================
+   REFLEKSI
+========================================================= */
+const REFL_STATEMENTS=[
+  'Saya dapat menjelaskan cara kerja Bubble Sort dengan kata-kata saya sendiri.',
+  'Saya dapat membedakan kapan sebaiknya memakai Insertion Sort vs Quick Sort.',
+  'Saya memahami perbedaan Sequential Search dan Binary Search.',
+  'Saya bisa mengikuti alur langkah algoritma pengurutan pada animasi tanpa bingung.',
+  'Saya percaya diri menerapkan cara berpikir algoritmik pada masalah baru.'
+];
+const STRAT_PLAN=['Saya menentukan target belajar sebelum mulai (misal: "hari ini paham 2 algoritma").','Saya memperkirakan bagian mana yang akan sulit sebelum mulai belajar.'];
+const STRAT_MONITOR=['Saya mengulang animasi/visualisasi saat belum paham.','Saya mencoba menjelaskan ulang materi dengan kata saya sendiri untuk mengecek pemahaman.','Saya bertanya ke teman atau guru saat menemui kebuntuan.'];
+const STRAT_EVAL=['Saya membandingkan hasil pre-test dan post-test untuk menilai perkembangan saya.','Saya mencatat bagian yang masih perlu dipelajari ulang.'];
+
+function buildReflekasi(){
+  const sWrap=document.getElementById('reflSliders');
+  REFL_STATEMENTS.forEach((s,i)=>{
+    const row=document.createElement('div');
+    row.className='slider-row';
+    row.innerHTML=`<div class="slabel"><span>${s}</span><span id="reflVal-${i}">3</span></div>
+      <input type="range" class="refl" min="1" max="5" value="3" id="refl-${i}">`;
+    sWrap.appendChild(row);
+    row.querySelector('input').addEventListener('input',e=>{ document.getElementById('reflVal-'+i).textContent=e.target.value; });
+  });
+  function renderChecklist(containerId,items,prefix){
+    const el=document.getElementById(containerId);
+    items.forEach((t,i)=>{
+      const row=document.createElement('label');
+      row.className='check-strategy';
+      row.innerHTML=`<input type="checkbox" id="${prefix}-${i}"><span>${t}</span>`;
+      el.appendChild(row);
+    });
+  }
+  renderChecklist('stratPlan',STRAT_PLAN,'plan');
+  renderChecklist('stratMonitor',STRAT_MONITOR,'monitor');
+  renderChecklist('stratEval',STRAT_EVAL,'eval');
+}
+
+/* =========================================================
+   HASIL AKHIR
+========================================================= */
+function buildHasil(){
+  document.getElementById('hasilIdentitas').innerHTML =
+    `<b>${state.student.nama}</b><br>NIS: ${state.student.nisn}<br>Kelas: ${state.student.kelas}<br>${state.student.hari}, ${state.student.tanggal}`;
+
+  const prePct = state.pre.total? Math.round((state.pre.correct/state.pre.total)*100):0;
+  const postPct = state.post.total? Math.round((state.post.correct/state.post.total)*100):0;
+  const cWrap=document.getElementById('compareChart');
+  cWrap.innerHTML=`
+    <div style="margin-bottom:14px;">
+      <div class="slabel" style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>Pre-Test</span><span>${prePct}%</span></div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:${prePct}%;background:linear-gradient(90deg,var(--amber),var(--magenta));"></div></div>
+    </div>
+    <div>
+      <div class="slabel" style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>Post-Test</span><span>${postPct}%</span></div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:${postPct}%;"></div></div>
+    </div>
+    <p style="margin-top:14px;">${postPct>prePct? `Peningkatan sebesar ${postPct-prePct} poin persentase. Kerja bagus! 🎉` : postPct===prePct? 'Skormu stabil — coba tinjau ulang bagian yang masih terasa sulit.' : 'Jangan berkecil hati, coba pelajari ulang bagian yang belum dikuasai bersama gurumu.'}</p>
+  `;
+
+  const qPct = state.quiz.total? Math.round((state.quiz.correct/state.quiz.total)*100):0;
+  document.getElementById('hasilKuis').innerHTML = `${state.quiz.correct} dari ${state.quiz.total} soal benar (${qPct}%)`;
+
+  const rWrap=document.getElementById('hasilRefleksi');
+  rWrap.innerHTML='';
+  REFL_STATEMENTS.forEach((s,i)=>{
+    const val=Number(document.getElementById('refl-'+i)?.value||3);
+    const row=document.createElement('div');
+    row.className='slider-row';
+    row.innerHTML=`<div class="slabel"><span>${s}</span><span>${val}/5</span></div>
+      <div class="score-bar-track"><div class="score-bar-fill" style="width:${val*20}%;background:linear-gradient(90deg,var(--violet),var(--cyan));"></div></div>`;
+    rWrap.appendChild(row);
+  });
+}
+
+/* =========================================================
+   WIRING BUTTONS
+========================================================= */
+function initFlow(){
+  buildPrePostTest('pretestQuestions',PRETEST_Q,'pre');
+  buildPrePostTest('posttestQuestions',POSTTEST_Q,'post');
+  buildMateri();
+  buildSimulasi();
+  buildQuiz();
+  buildReflekasi();
+
+  document.getElementById('btnSubmitPre').addEventListener('click',()=>{
+    const r=gradeTest(PRETEST_Q,'pre');
+    state.pre={correct:r.correct,total:r.total};
+    const pct=Math.round((r.correct/r.total)*100);
+    document.getElementById('preScoreText').textContent=`Skor kamu: ${r.correct}/${r.total} (${pct}%)`;
+    document.getElementById('preScoreBar').style.width=pct+'%';
+    document.getElementById('preResultCard').style.display='block';
+  });
+  document.getElementById('btnAfterPre').addEventListener('click',()=>goTo('tujuan'));
+  document.getElementById('btnToMateri').addEventListener('click',()=>goTo('materi'));
+  document.getElementById('btnToSimulasi').addEventListener('click',()=>goTo('simulasi'));
+  document.getElementById('btnToKuis').addEventListener('click',()=>goTo('kuis'));
+  document.getElementById('btnToRefleksi').addEventListener('click',()=>goTo('refleksi'));
+  document.getElementById('btnToPost').addEventListener('click',()=>goTo('posttest'));
+
+  document.getElementById('btnSubmitPost').addEventListener('click', async ()=>{
+    if(state.submitted){ buildHasil(); goTo('hasil'); return; }
+
+    const tombol=document.getElementById('btnSubmitPost');
+    const r=gradeTest(POSTTEST_Q,'post');
+    state.post={correct:r.correct,total:r.total};
+
+    tombol.disabled=true;
+    tombol.textContent='⏳ Menyimpan hasil...';
+
+    const tersimpan=await kirimHasilKeGoogleSheets();
+    state.submitted=true;
+
+    buildHasil();
+    goTo('hasil');
+
+    if(!tersimpan){
+      const pesan=document.getElementById('hasilPesan');
+      if(pesan) pesan.textContent='⚠️ Hasil sudah ditampilkan, tetapi koneksi penyimpanan perlu dicek oleh guru.';
+    }
+
+    tombol.disabled=false;
+    tombol.textContent='Kumpulkan Post-Test';
+  });
+
+  document.getElementById('btnKeluar').addEventListener('click',()=>{
+    document.getElementById('exitNama').textContent=state.student.nama||'Murid';
+    document.querySelectorAll('#view-hasil > *').forEach(el=>{ if(el.id!=='viewExit') el.style.display='none'; });
+    document.getElementById('viewExit').style.display='block';
+    const stepperEl=document.getElementById('stepper');
+    stepperEl.style.pointerEvents='none';
+    stepperEl.style.opacity='0.4';
+  });
+}
+
+
+/* =========================================================
+   GOOGLE SHEETS INTEGRATION
+   Ganti URL berikut dengan URL Web App Google Apps Script.
+========================================================= */
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxp2XHc3bNSoKYMhWy-ekhg-4dTfB1slH78RIO-_PPsjeno8OtHq8P-2zqOwkhZRvqD/exec';
+
+function getCheckedStrategies(){
+  const groups=[
+    {prefix:'plan',items:STRAT_PLAN},
+    {prefix:'monitor',items:STRAT_MONITOR},
+    {prefix:'eval',items:STRAT_EVAL}
+  ];
+  return groups.flatMap(g=>g.items.filter((_,i)=>document.getElementById(`${g.prefix}-${i}`)?.checked)).join(' | ');
+}
+
+async function kirimHasilKeGoogleSheets(){
+  if(!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('PASTE_URL')){
+    console.warn('URL Google Apps Script belum diisi.');
+    return false;
+  }
+
+  const prePct=state.pre.total ? Math.round((state.pre.correct/state.pre.total)*100) : 0;
+  const postPct=state.post.total ? Math.round((state.post.correct/state.post.total)*100) : 0;
+  const quizPct=state.quiz.total ? Math.round((state.quiz.correct/state.quiz.total)*100) : 0;
+  const refleksiSkor=REFL_STATEMENTS.map((_,i)=>Number(document.getElementById('refl-'+i)?.value||3));
+
+  const data={
+    sessionId:state.sessionId,
+    nama:state.student.nama,
+    nis:state.student.nisn,
+    kelas:state.student.kelas,
+    tanggal:state.student.tanggal,
+    hari:state.student.hari,
+    preTest:prePct,
+    skorKuis:state.quiz.correct,
+    totalKuis:state.quiz.total,
+    persentaseKuis:quizPct,
+    postTest:postPct,
+    peningkatan:postPct-prePct,
+    refleksiSkor:refleksiSkor.join(','),
+    refleksiRataRata:(refleksiSkor.reduce((a,b)=>a+b,0)/refleksiSkor.length).toFixed(2),
+    refleksiSulit:document.getElementById('reflSulit')?.value.trim()||'',
+    refleksiStrategi:getCheckedStrategies() || document.getElementById('reflStrategi')?.value.trim()||'',
+    refleksiTarget:document.getElementById('reflTarget')?.value.trim()||''
+  };
+
+  try{
+    // no-cors dipakai agar Web App Apps Script dapat menerima POST dari GitHub Pages.
+    await fetch(GOOGLE_SCRIPT_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(data)
+    });
+    console.log('Permintaan penyimpanan dikirim ke Google Sheets.');
+    return true;
+  }catch(error){
+    console.error('Gagal mengirim hasil:',error);
+    return false;
+  }
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+buildStepper();
+initCover();
+initFlow();
+</script>
+</body>
+</html>
